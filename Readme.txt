@@ -1,14 +1,8 @@
-# Meet Transcriber 🎙️
+Meet Transcriber 🎙️
 
 **Automatically capture, transcribe, and summarize Google Meet conversations with AI-powered insights.**
 
 A Chrome extension that transforms Google Meet captions into structured meeting summaries, automatically saves them to Google Drive, and emails you the key takeaways.
-
-![Version](https://img.shields.io/badge/version-2.4-blue)
-![Status](https://img.shields.io/badge/status-working-success)
-![AI](https://img.shields.io/badge/AI-Groq%20LLaMA%203.3-purple)
-
----
 
 ## 🌟 What This Extension Does
 
