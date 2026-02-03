@@ -47,18 +47,18 @@ A Chrome extension that transforms Google Meet captions into structured meeting 
 ## 🚀 How It Works
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  1. Join Google Meet → Enable Captions                      │
-│                                                              │
+│  1. Join Google Meet → Auto Enable Captions                 │
+│                                                             │
 │  2. Extension automatically captures everything             │
-│     ├─ Raw caption stream (every 500ms)                    │
-│     ├─ Smart deduplication                                 │
+│     ├─ Raw caption stream (every 500ms)                     │
+│     ├─ Smart deduplication                                  │
 │     └─ Clean transcript saved locally                       │
-│                                                              │
-│  3. Click "🤖 Process with AI" button                       │
-│     ├─ Groq AI analyzes transcript                         │
-│     ├─ Google Drive uploads file                           │
+│                                                             │
+│  3. Click "🤖 Process with AI" button                      │
+│     ├─ Groq AI analyzes transcript                          │
+│     ├─ Google Drive uploads file                            │
 │     └─ Gmail sends summary                                  │
-│                                                              │
+│                                                             │
 │  4. Get email with insights + Drive link                    │
 └─────────────────────────────────────────────────────────────┘
 ```
