@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      width: 360px;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: radial-gradient(ellipse at center, #dcfce7 0%, #f0fdf4 40%, #ffffff 80%);
+      color: #0a2e1f;
+      padding: 0;
+    }
+
+    /* Header - light green background */
+    .header {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      padding: 24px 20px;
+      border-bottom: 1px solid #bbf7d0;
+    }
+    
+    h1 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #166534;
+      margin-bottom: 4px;
+      letter-spacing: -0.5px;
+    }
+    
+    .subtitle {
+      font-size: 14px;
+      color: #16a34a;
+      font-weight: 400;
+    }
+    
+    /* Main content */
+    .content {
+      padding: 20px;
+    }
+    
+    /* Status card */
+    .status-card {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      border: 1px solid #f5f5f5;
+    }
+    
+    .status-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    
+    .status-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0a2e1f;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      background: #f9fafb;
+      color: #6b7280;
+    }
+    
+    .status-badge.capturing {
+      background: #dcfce7;
+      color: #166534;
+    }
+    
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    
+    .status-badge.capturing .status-dot {
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    .status-text {
+      font-size: 15px;
+      font-weight: 500;
+      color: #0a2e1f;
+      margin-bottom: 8px;
+    }
+    
+    .status-detail {
+      font-size: 13px;
+      color: #6b7280;
+    }
+    
+    .status-detail strong {
+      color: #0a2e1f;
+      font-weight: 600;
+    }
+    
+    /* Buttons */
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    
+    button {
+      width: 100%;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    
+    .btn-primary {
+      background: #ffffff;
+      color: #16a34a;
+      border: 2px solid #86efac;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    
+    .btn-primary:hover {
+      background: #f0fdf4;
+      border-color: #4ade80;
+    }
+    
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    
+    .btn-secondary {
+      background: #ffffff;
+      color: #374151;
+      border: 1.5px solid #e5e7eb;
+    }
+    
+    .btn-secondary:hover {
+      background: #f9fafb;
+      border-color: #d1d5db;
+    }
+    
+    .btn-danger {
+      background: #ffffff;
+      color: #dc2626;
+      border: 1.5px solid #fecaca;
+    }
+    
+    .btn-danger:hover {
+      background: #fef2f2;
+    }
+    
+    /* Settings section */
+    .settings-section {
+      background: #ffffff;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      border: 1px solid #f5f5f5;
+      margin-bottom: 16px;
+    }
+    
+    .settings-header {
+      font-size: 13px;
+      font-weight: 600;
+      color: #0a2e1f;
+      margin-bottom: 12px;
+    }
+    
+    /* Info card */
+    .info-card {
+      background: #f0fdf4;
+      border-radius: 16px;
+      padding: 18px;
+      border: 1px solid #dcfce7;
+    }
+    
+    .info-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #0a2e1f;
+      margin-bottom: 12px;
+    }
+    
+    .info-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .info-list li {
+      font-size: 13px;
+      color: #166534;
+      padding: 5px 0;
+      padding-left: 20px;
+      position: relative;
+      line-height: 1.5;
+    }
+    
+    .info-list li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #22c55e;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    
+    .info-note {
+      font-size: 12px;
+      color: #16a34a;
+      margin-top: 10px;
+      font-style: italic;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header">
+    <h1>Meet Transcriber</h1>
+    <div class="subtitle">AI-powered meeting notes</div>
+  </div>
+  
+  <!-- Main Content -->
+  <div class="content">
+    <!-- Status Card -->
+    <div class="status-card">
+      <div class="status-header">
+        <span class="status-label">Status</span>
+        <span class="status-badge" id="statusBadge">
+          <span class="status-dot"></span>
+          <span>Idle</span>
+        </span>
+      </div>
+      <div class="status-text" id="statusText">Waiting for captions...</div>
+      <div class="status-detail">
+        Captions captured: <strong id="captionCount">0</strong>
+      </div>
+    </div>
+    
+    <!-- Buttons -->
+    <div class="button-group">
+      <button class="btn-primary" id="viewBtn">
+        <span>📝</span>
+        <span>View Transcripts</span>
+      </button>
+      
+      <button class="btn-danger" id="manualStopBtn">
+        <span>⏹️</span>
+        <span>Force Stop & Save</span>
+      </button>
+    </div>
+    
+    <!-- Settings -->
+    <div class="settings-section">
+      <div class="settings-header">Settings</div>
+      <button class="btn-secondary" id="changeEmailBtn">
+        <span>📧</span>
+        <span>Change Google Account</span>
+      </button>
+    </div>
+    
+    <!-- Info Card -->
+    <div class="info-card">
+      <div class="info-title">
+        <span>🤖</span>
+        <span>Automatic Mode</span>
+      </div>
+      <ul class="info-list">
+        <li>Auto-enables captions</li>
+        <li>Captures everything said</li>
+        <li>AI processes when meeting ends</li>
+        <li>Email sent automatically</li>
+      </ul>
+      <div class="info-note">
+        Just join a meeting and it works!
+      </div>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

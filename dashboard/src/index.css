@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background-color: #ffffff; /* Force White */
+  color: #111827;
+  font-family: 'Inter', system-ui, sans-serif;
+}
