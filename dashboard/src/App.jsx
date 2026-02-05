@@ -4,14 +4,12 @@ import { useAuthState } from 'react-firebase-hooks/auth';
 import { auth } from './firebase';
 import Login from './Login';
 import Dashboard from './Dashboard';
+import Layout from './Layout';
+import Settings from './Settings'; // Ensure this matches the file name exactly
 
-// Secure Route Component
-// If user is loading, show nothing. If not logged in, go to Login.
 function PrivateRoute({ children }) {
   const [user, loading] = useAuthState(auth);
-
-  if (loading) return <div className="h-screen flex items-center justify-center bg-white text-gray-400">Loading...</div>;
-  
+  if (loading) return <div>Loading...</div>;
   return user ? children : <Navigate to="/login" />;
 }
 
@@ -21,15 +19,10 @@ export default function App() {
       <Routes>
         <Route path="/login" element={<Login />} />
         
-        {/* Protected Dashboard Route */}
-        <Route 
-          path="/" 
-          element={
-            <PrivateRoute>
-              <Dashboard />
-            </PrivateRoute>
-          } 
-        />
+        <Route element={<PrivateRoute><Layout /></PrivateRoute>}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/settings" element={<Settings />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

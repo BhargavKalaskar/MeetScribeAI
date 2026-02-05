@@ -1,0 +1,15 @@
+┌─────────────────────────────────────────────────────────┐
+│  FULLY AUTOMATED MEETING ASSISTANT                      │
+│                                                          │
+│  1. Join Google Meet                                    │
+│  2. Enable captions                                     │
+│  3. Talk...                                             │
+│  4. Leave meeting                                       │
+│     ↓                                                   │
+│  5. 🤖 AI processes automatically (10 seconds)          │
+│  6. 📁 Saves to Drive automatically                     │
+│  7. 📧 Emails you automatically                         │
+│                                                          │
+│  USER DOES: Turn on captions                           │
+│  EXTENSION DOES: EVERYTHING ELSE                        │
+└─────────────────────────────────────────────────────────┘

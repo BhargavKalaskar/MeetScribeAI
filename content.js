@@ -1,4 +1,4 @@
-// Meet Transcriber - Content Script (PRODUCTION - Raw Capture + Post-Process)
+// Meet Transcriber - Content Script (PRODUCTION - Smart Title Update)
 console.log('Meet Transcriber: PRODUCTION MODE');
 
 let meetingTitle = '';
@@ -9,10 +9,32 @@ let lastCaptionText = '';
 
 // === HELPER FUNCTIONS ===
 
+// ✅ NEW: SMART TITLE LOGIC
 function getMeetingTitle() {
-  const titleElement = document.querySelector('[data-meeting-title]') || 
-                       document.querySelector('div[jsname="r4nke"]');
-  return titleElement ? titleElement.textContent.trim() : `Meeting ${new Date().toLocaleString()}`;
+  try {
+    // Priority 1: Google's internal data attribute (Best for real names)
+    const titleEl = document.querySelector('[data-meeting-title]');
+    if (titleEl && titleEl.dataset.meetingTitle) {
+      return titleEl.dataset.meetingTitle;
+    }
+
+    // Priority 2: Browser Tab Title (Very reliable)
+    // usually "Weekly Sync - Google Meet" or "abc-def-ghi - Google Meet"
+    let cleanTitle = document.title.replace(' - Google Meet', '').trim();
+    
+    // If it's just a meeting code (e.g. "abc-defg-hij"), format it nicely
+    if (/^[a-z]{3}-[a-z]{4}-[a-z]{3}$/.test(cleanTitle)) {
+      return `Meeting (${cleanTitle})`; 
+    }
+
+    // Priority 3: Fallback
+    if (cleanTitle) return cleanTitle;
+
+  } catch (e) {
+    console.warn("Title extraction failed, using default.");
+  }
+  
+  return `Meeting ${new Date().toLocaleDateString()}`;
 }
 
 function findCaptionContainer() {
@@ -139,7 +161,7 @@ function startCapturing() {
   
   console.log('▶️ START CAPTURE');
   isCapturing = true;
-  meetingTitle = getMeetingTitle();
+  meetingTitle = getMeetingTitle(); // Initial grab
   rawCaptionStream = [];
   lastCaptionText = '';
 
@@ -162,6 +184,10 @@ async function stopCapturing(reason = 'unknown') {
   if (!isCapturing) return;
   
   console.log('⏹️ STOP -', reason);
+
+  // ✅ NEW: Refresh title (Titles often load AFTER meeting starts)
+  meetingTitle = getMeetingTitle();
+  console.log(`📝 Final Title for Save: "${meetingTitle}"`);
   
   // Final capture
   const captionContainer = findCaptionContainer();
@@ -196,7 +222,6 @@ async function stopCapturing(reason = 'unknown') {
       // Get Google OAuth token
       console.log('🔐 Getting Google OAuth token...');
       
-      // FIX 1: Added 'await' here so we get the string, not the Promise
       const googleToken = await getGoogleAccessToken();
       
       if (!googleToken) {
@@ -205,13 +230,13 @@ async function stopCapturing(reason = 'unknown') {
         return;
       }
       
-      // Set token in Firebase client (no separate auth needed!)
+      // Set token in Firebase client
       window.firebaseClient.setGoogleToken(googleToken);
       
       // Save transcript
       console.log('☁️ Saving to Firestore...');
       const result = await window.firebaseClient.saveTranscript(
-        meetingTitle,
+        meetingTitle, // ✅ Using the refreshed Smart Title
         finalTranscript,
         new Date().toISOString()
       );
@@ -285,7 +310,6 @@ document.addEventListener('click', (e) => {
 });
 
 // Notification
-// Update showNotification to accept duration parameter
 function showNotification(msg, duration = 3000) {
   const div = document.createElement('div');
   div.style.cssText = `
@@ -507,7 +531,6 @@ smartCaptionEnable();
 
 // ==================== HELPER FUNCTIONS FOR FIREBASE SAVE ====================
 
-// FIX 2: Added the missing helper function here
 async function getGoogleAccessToken() {
   return new Promise((resolve) => {
     chrome.runtime.sendMessage({ action: 'getOAuthToken' }, (response) => {
