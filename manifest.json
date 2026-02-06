@@ -1,19 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Meet Transcriber",
-  "version": "2.5",
-  "key": "MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgEbuXzH+yMlM+a3Su24y+6if0eQ6DkLJHdvsdlqDA/qffk6s857ALrwJZOAnwI5km5jwfBmBsYi4tQGXOpy0aFwampeE7dKgj4VvAsH8z+zszSkYbgPgRdqRLBl7MEthF/xktsPau0HVlqSsqxZMlPsqqo7eC34AOHgP4RS9CtkBAgMBAAE=",
+  "version": "2.7",
   "description": "Automatically transcribe Google Meet captions with AI summaries",
+  "key": "MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgEbuXzH+yMlM+a3Su24y+6if0eQ6DkLJHdvsdlqDA/qffk6s857ALrwJZOAnwI5km5jwfBmBsYi4tQGXOpy0aFwampeE7dKgj4VvAsH8z+zszSkYbgPgRdqRLBl7MEthF/xktsPau0HVlqSsqxZMlPsqqo7eC34AOHgP4RS9CtkBAgMBAAE=",
   
   "permissions": [
     "storage",
-    "identity"
+    "identity",
+    "cookies"
   ],
   
   "host_permissions": [
     "https://meet.google.com/*",
     "https://asia-south1-meet-transcriber-f8a91.cloudfunctions.net/*",
-    "https://www.googleapis.com/*"
+    "http://localhost:5173/*"
   ],
   
   "oauth2": {
@@ -21,15 +22,13 @@
     "scopes": [
       "https://www.googleapis.com/auth/userinfo.email",
       "https://www.googleapis.com/auth/userinfo.profile",
-      "https://www.googleapis.com/auth/drive.file",
-      "https://www.googleapis.com/auth/gmail.send"
+      "https://www.googleapis.com/auth/drive.file"
     ]
   },
   
   "content_scripts": [{
     "matches": ["https://meet.google.com/*"],
     "js": [
-      "firebase-init.js",
       "config.js",
       "api-helpers.js",
       "content.js"

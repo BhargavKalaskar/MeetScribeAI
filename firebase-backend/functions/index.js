@@ -9,31 +9,180 @@ admin.initializeApp();
 const GROQ_API_KEY = process.env.GROQ_API_KEY; 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-// ==================== 1. THE BRIDGE (Identity Magic) ====================
-// This finds the Firebase User ID based on the Google Token
-// so your Dashboard can see the data later.
+// ==================== 1. UTILITIES (Formatters) ====================
+
+function formatForDrive(title, data, fullTranscript) {
+  const date = new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' });
+  const line = "________________________________________________________________________________";
+  const bullet = (arr) => arr && arr.length ? arr.map(i => `- ${i}`).join('\n') : '(None)';
+
+  return `MEETING RECORD
+${line}
+
+TITLE:    ${title}
+DATE:     ${date}
+
+${line}
+
+1. EXECUTIVE SUMMARY
+${data.summary}
+
+2. KEY POINTS
+${bullet(data.keyPoints)}
+
+3. DECISIONS MADE
+${bullet(data.decisions)}
+
+4. ACTION ITEMS
+${bullet(data.actionItems)}
+
+5. OPEN ISSUES
+${bullet(data.openIssues)}
+
+${line}
+
+6. FULL TRANSCRIPT
+${fullTranscript}
+`;
+}
+
+function formatForEmail(title, data, driveLink) {
+  const listHtml = (arr) => {
+    if (!arr || arr.length === 0) return '<p style="color: #666; font-style: italic; margin: 0;">None recorded</p>';
+    return `<ul style="margin: 5px 0 15px 0; padding-left: 20px;">${arr.map(item => `<li style="margin-bottom: 5px;">${item}</li>`).join('')}</ul>`;
+  };
+
+  return `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #111; max-width: 650px; line-height: 1.6; font-size: 14px;">
+      <div style="border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 25px;">
+        <h2 style="margin: 0; font-size: 20px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Meeting Summary</h2>
+        <p style="margin: 5px 0 0 0; color: #555; font-size: 14px;">${title}</p>
+      </div>
+
+      <div style="margin-bottom: 25px;">
+        <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #888; margin-bottom: 8px; letter-spacing: 1px;">Executive Summary</h3>
+        <p style="margin: 0;">${data.summary}</p>
+      </div>
+
+      <div style="margin-bottom: 25px;">
+        <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #888; margin-bottom: 8px; letter-spacing: 1px;">Key Discussion Points</h3>
+        ${listHtml(data.keyPoints)}
+      </div>
+
+      <div style="margin-bottom: 25px;">
+        <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #888; margin-bottom: 8px; letter-spacing: 1px;">Decisions Made</h3>
+        ${listHtml(data.decisions)}
+      </div>
+
+      <div style="margin-bottom: 25px;">
+        <h3 style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #888; margin-bottom: 8px; letter-spacing: 1px;">Action Items</h3>
+        ${listHtml(data.actionItems)}
+      </div>
+
+       <div style="text-align: center; margin-top: 40px; border-top: 1px solid #eee; padding-top: 20px;">
+        <a href="${driveLink}" style="background-color: #000; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 14px;">View Full Transcript on Drive</a>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== 2. EXTERNAL SERVICES (Drive & Gmail) ====================
+
+async function uploadToDrive(fileName, content, accessToken) {
+  const folderName = "Meet Scribe Recordings";
+  let folderId;
+
+  const q = `name='${folderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`;
+  const searchRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, {
+    headers: { 'Authorization': `Bearer ${accessToken}` }
+  });
+  const searchData = await searchRes.json();
+
+  if (searchData.files && searchData.files.length > 0) {
+    folderId = searchData.files[0].id;
+  } else {
+    const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: folderName,
+        mimeType: 'application/vnd.google-apps.folder'
+      })
+    });
+    const createData = await createRes.json();
+    folderId = createData.id;
+  }
+
+  const metadata = { name: fileName, parents: [folderId] };
+  const boundary = '-------314159265358979323846';
+  const delimiter = "\r\n--" + boundary + "\r\n";
+  const close_delim = "\r\n--" + boundary + "--";
+
+  const multipartRequestBody =
+    delimiter +
+    'Content-Type: application/json\r\n\r\n' +
+    JSON.stringify(metadata) +
+    delimiter +
+    'Content-Type: text/plain\r\n\r\n' +
+    content +
+    close_delim;
+
+  const uploadRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'multipart/related; boundary="' + boundary + '"'
+    },
+    body: multipartRequestBody
+  });
+
+  const uploadData = await uploadRes.json();
+  return `https://drive.google.com/file/d/${uploadData.id}/view`;
+}
+
+async function sendEmail(userEmail, title, htmlContent, accessToken) {
+  const subject = `Summary: ${title}`;
+  const body = [
+    `To: ${userEmail}`,
+    `Subject: ${subject}`,
+    'MIME-Version: 1.0',
+    'Content-Type: text/html; charset=utf-8',
+    '',
+    htmlContent
+  ].join('\r\n');
+
+  const encodedEmail = Buffer.from(body).toString('base64')
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+  await fetch('https://www.googleapis.com/gmail/v1/users/me/messages/send', {
+    method: 'POST',
+    headers: { 
+      'Authorization': `Bearer ${accessToken}`,
+      'Content-Type': 'application/json' 
+    },
+    body: JSON.stringify({ raw: encodedEmail })
+  });
+}
+
+// ==================== 3. IDENTITY BRIDGE ====================
 
 async function verifyGoogleTokenAndGetUser(googleAccessToken) {
   try {
-    // A. Ask Google: "Who is this?"
     const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo`, {
         headers: { 'Authorization': `Bearer ${googleAccessToken}` }
     });
-
     if (!response.ok) throw new Error('Invalid Google Token');
-    
     const googleUser = await response.json();
     const email = googleUser.email;
 
-    // B. Ask Firebase: "Do we have this user?"
     try {
       const firebaseUser = await admin.auth().getUserByEmail(email);
-      console.log(`✅ User Exists: ${firebaseUser.uid}`);
       return { uid: firebaseUser.uid, email: email };
     } catch (e) {
       if (e.code === 'auth/user-not-found') {
-        // C. Create them if missing
-        console.log(`🆕 Creating new user for: ${email}`);
         const newUser = await admin.auth().createUser({
           email: email,
           displayName: googleUser.name,
@@ -49,23 +198,22 @@ async function verifyGoogleTokenAndGetUser(googleAccessToken) {
   }
 }
 
-// ==================== 2. AI ANALYST (Professional Mode) ====================
-// ==================== 2. AI ANALYST (Professional Mode) ====================
+// ==================== 4. AI LOGIC (IMPROVED PROMPT) ====================
 
 async function generateAI_Summary(transcript) {
   try {
-    // ✅ USING YOUR SUPERIOR PROMPT
+    // === 🚀 UPGRADED PROMPT FOR DETAILED SUMMARIES ===
     const systemPrompt = `
-      You are a professional meeting analyst. Your output must be strictly factual, concise, and formal.
+      You are a senior meeting analyst. Your goal is to create a COMPREHENSIVE and DETAILED meeting record.
+      
+      Output a valid JSON object with exactly these keys:
+      1. "summary": A detailed executive summary (approx. 150-200 words). It must cover the meeting's context, the main arguments presented, key blockers identified, and the final outcome. Do NOT be brief.
+      2. "keyPoints": An array of detailed bullet points capturing the flow of the discussion.
+      3. "decisions": An array of explicit decisions or approvals made (e.g., "Approved budget of $5k").
+      4. "actionItems": An array of specific tasks with owners and deadlines (e.g., "John to email client by Friday").
+      5. "openIssues": An array of unresolved questions or topics tabled for later.
        
-      Analyze the transcript and output a valid JSON object with exactly these keys:
-      1. "summary": A concise executive summary (3-4 sentences max).
-      2. "keyPoints": An array of the most critical discussion points.
-      3. "decisions": An array of explicit decisions or approvals made.
-      4. "actionItems": An array of tasks with owners and deadlines (e.g., "John to finalize Q3 report by Friday").
-      5. "openIssues": An array of unresolved questions or topics requiring follow-up.
-       
-      Do not use markdown. Do not use emojis. Do not use conversational filler. Return ONLY the JSON object.
+      Do not use markdown. Do not use conversational filler. Return ONLY the JSON object.
     `;
 
     const response = await fetch(GROQ_API_URL, {
@@ -80,77 +228,80 @@ async function generateAI_Summary(transcript) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: transcript }
         ],
-        temperature: 0.2, // Keep strictly factual
-        response_format: { type: "json_object" } // Enforce JSON structure
+        temperature: 0.3, // Increased slightly for more expressive summaries
+        response_format: { type: "json_object" }
       })
     });
 
     const data = await response.json();
-    
-    // Parse the JSON content safely
-    if (!data.choices || !data.choices[0] || !data.choices[0].message) {
-      throw new Error('Invalid AI Response structure');
-    }
-    
     return JSON.parse(data.choices[0].message.content);
-    
   } catch (error) {
     console.error('AI Error:', error);
-    // Fallback structure
-    return { 
-      summary: "AI Processing Failed", 
-      keyPoints: [], decisions: [], actionItems: [], openIssues: [] 
-    };
+    return { summary: "AI Processing Failed", keyPoints: [], decisions: [], actionItems: [], openIssues: [] };
   }
 }
 
-// ==================== 3. MAIN FUNCTION ====================
+// ==================== 5. MAIN HANDLER ====================
 
 exports.processMeeting = onRequest(
-  { region: 'asia-south1', cors: true, secrets: ["GROQ_API_KEY"] }, 
+  { region: 'asia-south1', cors: true, secrets: ["GROQ_API_KEY"], timeoutSeconds: 300 },
   (req, res) => {
     cors(req, res, async () => {
       try {
-        // 1. Auth Check (The Bridge)
         const authHeader = req.headers.authorization;
         if (!authHeader) return res.status(401).json({ error: 'Missing Token' });
-        
         const googleToken = authHeader.split('Bearer ')[1];
-        const user = await verifyGoogleTokenAndGetUser(googleToken); // 🌉 Magic happens here
+        
+        const user = await verifyGoogleTokenAndGetUser(googleToken);
 
-        // 2. Input Validation
         const { title, transcript, meetingDate } = req.body;
-        if (!transcript || transcript.length < 50) {
-          return res.status(400).json({ error: 'Transcript too short' });
-        }
+        if (!transcript || transcript.length < 50) return res.status(400).json({ error: 'Transcript too short' });
 
-        // 3. Generate AI Content
+        // 1. Generate AI Summary (Now Detailed)
         const structuredData = await generateAI_Summary(transcript);
 
-        // 4. Save to Firestore (Under the Firebase UID!)
-        const docRef = await admin.firestore()
-          .collection('users')
-          .doc(user.uid)
-          .collection('meetings')
-          .add({
+        // 2. Save to Firestore
+        const docRef = await admin.firestore().collection('users').doc(user.uid).collection('meetings').add({
             title: title || 'Untitled',
             transcript: transcript,
             summaryData: structuredData,
             meetingDate: meetingDate || new Date().toISOString(),
             createdAt: admin.firestore.FieldValue.serverTimestamp(),
             status: 'processed'
-          });
+        });
 
-        // 5. Success Response
-        // ✅ CRITICAL: We return 'data' to match what api-helpers.js expects
+        // 3. Upload to Drive (Server Side)
+        const timestamp = new Date().toISOString().split('T')[0];
+        const safeTitle = (title || 'Meeting').replace(/[^a-z0-9]/gi, '_');
+        const fileName = `${timestamp}_${safeTitle}_Summary.txt`;
+        const fileContent = formatForDrive(title, structuredData, transcript);
+        
+        let driveLink = null;
+        try {
+            driveLink = await uploadToDrive(fileName, fileContent, googleToken);
+            await docRef.update({ driveLink: driveLink });
+        } catch (driveErr) {
+            console.error('Drive Upload Failed:', driveErr);
+        }
+
+        // 4. Send Email (Server Side)
+        try {
+            const emailHtml = formatForEmail(title, structuredData, driveLink || '#');
+            await sendEmail(user.email, title, emailHtml, googleToken);
+        } catch (emailErr) {
+            console.error('Email Failed:', emailErr);
+        }
+
+        // 5. Return Success
         return res.status(200).json({ 
             success: true, 
             id: docRef.id, 
-            data: structuredData 
+            data: structuredData,
+            driveLink: driveLink 
         });
 
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Fatal Error:', error);
         return res.status(500).json({ error: error.message });
       }
     });

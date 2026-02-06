@@ -6,309 +6,340 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    /* === MODERN DASHBOARD THEME === */
+    :root {
+      --bg: #ffffff;
+      --surface: #f9fafb;
+      --border: #e5e7eb;
+      --text-main: #111827;   /* Almost Black */
+      --text-muted: #6b7280;  /* Cool Gray */
+      --primary: #18181b;     /* Zinc 900 (Black) */
+      --primary-hover: #27272a;
+      --danger: #ef4444;
+      --success: #10b981;
     }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     
     body {
       width: 360px;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-      background: radial-gradient(ellipse at center, #dcfce7 0%, #f0fdf4 40%, #ffffff 80%);
-      color: #0a2e1f;
-      padding: 0;
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-main);
+      -webkit-font-smoothing: antialiased;
     }
 
-    /* Header - light green background */
+    /* Header */
     .header {
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-      padding: 24px 20px;
-      border-bottom: 1px solid #bbf7d0;
+      background: var(--bg);
+      padding: 20px 20px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
     
-    h1 {
-      font-size: 22px;
+    .header-text h1 {
+      font-size: 18px;
       font-weight: 700;
-      color: #166534;
-      margin-bottom: 4px;
-      letter-spacing: -0.5px;
+      color: var(--text-main);
+      margin-bottom: 2px;
+      letter-spacing: -0.025em;
     }
     
-    .subtitle {
-      font-size: 14px;
-      color: #16a34a;
+    .header-text .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
       font-weight: 400;
     }
-    
-    /* Main content */
-    .content {
-      padding: 20px;
+
+    /* Profile Icon Button */
+    .profile-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-main);
+      transition: all 0.2s;
     }
-    
-    /* Status card */
-    .status-card {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 20px;
+    .profile-btn:hover { background: #f3f4f6; border-color: #d1d5db; }
+    .profile-btn svg { width: 20px; height: 20px; }
+
+    /* Main Content Area */
+    .content { padding: 20px; }
+
+    /* === LOGIN VIEW STYLES (New) === */
+    .login-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-top: 20px;
+      padding-bottom: 10px;
+    }
+
+    .lock-icon {
+      width: 48px;
+      height: 48px;
+      background: #f3f4f6;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       margin-bottom: 16px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-      border: 1px solid #f5f5f5;
+      color: var(--text-muted);
+    }
+
+    .login-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-main);
+    }
+
+    .login-desc {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      line-height: 1.5;
+    }
+
+    /* Helper to Hide Views */
+    .hidden { display: none !important; }
+    
+    /* === MAIN VIEW STYLES === */
+    .status-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 20px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     }
     
     .status-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
     
     .status-label {
-      font-size: 13px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
       font-weight: 600;
-      color: #0a2e1f;
+      color: var(--text-muted);
     }
     
     .status-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      padding: 6px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 500;
-      background: #f9fafb;
-      color: #6b7280;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 600;
+      background: var(--surface);
+      color: var(--text-muted);
+      border: 1px solid transparent;
     }
     
     .status-badge.capturing {
-      background: #dcfce7;
-      color: #166534;
+      background: #ffffff;
+      color: var(--text-main);
+      border: 1px solid var(--border);
     }
     
     .status-dot {
       width: 6px;
       height: 6px;
       border-radius: 50%;
-      background: currentColor;
+      background: #d1d5db;
     }
     
     .status-badge.capturing .status-dot {
-      animation: pulse 2s ease-in-out infinite;
+      background: var(--success);
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+      animation: pulse 2s infinite;
     }
     
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.5; }
-    }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } }
     
     .status-text {
-      font-size: 15px;
-      font-weight: 500;
-      color: #0a2e1f;
-      margin-bottom: 8px;
-    }
-    
-    .status-detail {
-      font-size: 13px;
-      color: #6b7280;
-    }
-    
-    .status-detail strong {
-      color: #0a2e1f;
+      font-size: 14px;
       font-weight: 600;
+      color: var(--text-main);
+      margin-bottom: 4px;
     }
+    
+    .status-detail { font-size: 12px; color: var(--text-muted); }
+    .status-detail strong { color: var(--text-main); font-weight: 600; }
     
     /* Buttons */
     .button-group {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      margin-bottom: 16px;
+      margin-bottom: 20px;
     }
     
     button {
       width: 100%;
-      padding: 14px 18px;
+      padding: 12px 16px;
       border: none;
-      border-radius: 12px;
+      border-radius: 8px;
       font-family: 'Inter', sans-serif;
-      font-size: 14px;
-      font-weight: 600;
+      font-size: 13px;
+      font-weight: 500;
       cursor: pointer;
-      transition: all 0.2s ease;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 8px;
+      transition: all 0.2s ease;
     }
     
     .btn-primary {
-      background: #ffffff;
-      color: #16a34a;
-      border: 2px solid #86efac;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+      background: var(--primary);
+      color: #ffffff;
+      border: 1px solid var(--primary);
     }
-    
-    .btn-primary:hover {
-      background: #f0fdf4;
-      border-color: #4ade80;
-    }
-    
-    .btn-primary:active {
-      transform: translateY(0);
-    }
+    .btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
     
     .btn-secondary {
       background: #ffffff;
-      color: #374151;
-      border: 1.5px solid #e5e7eb;
+      color: var(--text-main);
+      border: 1px solid var(--border);
     }
-    
-    .btn-secondary:hover {
-      background: #f9fafb;
-      border-color: #d1d5db;
-    }
+    .btn-secondary:hover { background: var(--surface); border-color: #d1d5db; }
     
     .btn-danger {
       background: #ffffff;
-      color: #dc2626;
-      border: 1.5px solid #fecaca;
+      color: var(--danger);
+      border: 1px solid #fecaca;
     }
+    .btn-danger:hover { background: #fef2f2; border-color: var(--danger); }
     
-    .btn-danger:hover {
-      background: #fef2f2;
-    }
-    
-    /* Settings section */
-    .settings-section {
-      background: #ffffff;
-      border-radius: 16px;
-      padding: 18px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-      border: 1px solid #f5f5f5;
-      margin-bottom: 16px;
-    }
-    
-    .settings-header {
-      font-size: 13px;
-      font-weight: 600;
-      color: #0a2e1f;
-      margin-bottom: 12px;
-    }
-    
-    /* Info card */
+    /* Info Card */
     .info-card {
-      background: #f0fdf4;
-      border-radius: 16px;
-      padding: 18px;
-      border: 1px solid #dcfce7;
+      background: var(--surface);
+      border-radius: 8px;
+      padding: 16px;
+      border: 1px solid var(--border);
     }
     
     .info-title {
       display: flex;
       align-items: center;
       gap: 8px;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      color: #0a2e1f;
-      margin-bottom: 12px;
+      color: var(--text-main);
+      margin-bottom: 10px;
     }
     
-    .info-list {
-      list-style: none;
-      padding: 0;
-      margin: 0;
-    }
+    .info-list { list-style: none; }
     
     .info-list li {
-      font-size: 13px;
-      color: #166534;
-      padding: 5px 0;
-      padding-left: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding: 3px 0;
+      padding-left: 18px;
       position: relative;
-      line-height: 1.5;
+      line-height: 1.4;
     }
     
     .info-list li::before {
-      content: '✓';
+      content: '•';
       position: absolute;
-      left: 0;
-      color: #22c55e;
-      font-weight: 600;
-      font-size: 14px;
-    }
-    
-    .info-note {
-      font-size: 12px;
-      color: #16a34a;
-      margin-top: 10px;
-      font-style: italic;
+      left: 4px;
+      color: var(--text-main);
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <!-- Header -->
   <div class="header">
-    <h1>Meet Transcriber</h1>
-    <div class="subtitle">AI-powered meeting notes</div>
+    <div class="header-text">
+      <h1>MeetScribeAI</h1>
+      <div class="subtitle">AI Meeting Assistant</div>
+    </div>
+    
+    <div class="profile-btn" id="profileBtn" title="Account Settings">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+      </svg>
+    </div>
   </div>
   
-  <!-- Main Content -->
   <div class="content">
-    <!-- Status Card -->
-    <div class="status-card">
-      <div class="status-header">
-        <span class="status-label">Status</span>
-        <span class="status-badge" id="statusBadge">
-          <span class="status-dot"></span>
-          <span>Idle</span>
-        </span>
+
+    <div id="loginView" class="login-container">
+      <div class="lock-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width:24px;height:24px;">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+        </svg>
       </div>
-      <div class="status-text" id="statusText">Waiting for captions...</div>
-      <div class="status-detail">
-        Captions captured: <strong id="captionCount">0</strong>
+      <div class="login-title">Authentication Required</div>
+      <div class="login-desc">
+        Please sign in to your dashboard to enable AI transcription and save meeting notes.
       </div>
-    </div>
-    
-    <!-- Buttons -->
-    <div class="button-group">
-      <button class="btn-primary" id="viewBtn">
-        <span>📝</span>
-        <span>View Transcripts</span>
+      <button class="btn-primary" id="loginBtn">
+        Sign In to Dashboard
       </button>
+    </div>
+
+    <div id="mainView" class="hidden">
+      <div class="status-card">
+        <div class="status-header">
+          <span class="status-label">Current Session</span>
+          <span class="status-badge" id="statusBadge">
+            <span class="status-dot"></span>
+            <span>Idle</span>
+          </span>
+        </div>
+        <div class="status-text" id="statusText">Waiting for meeting...</div>
+        <div class="status-detail">
+          Captions captured: <strong id="captionCount">0</strong>
+        </div>
+      </div>
       
-      <button class="btn-danger" id="manualStopBtn">
-        <span>⏹️</span>
-        <span>Force Stop & Save</span>
-      </button>
-    </div>
-    
-    <!-- Settings -->
-    <div class="settings-section">
-      <div class="settings-header">Settings</div>
-      <button class="btn-secondary" id="changeEmailBtn">
-        <span>📧</span>
-        <span>Change Google Account</span>
-      </button>
-    </div>
-    
-    <!-- Info Card -->
-    <div class="info-card">
-      <div class="info-title">
-        <span>🤖</span>
-        <span>Automatic Mode</span>
+      <div class="button-group">
+        <button class="btn-primary" id="dashboardBtn">
+          <span>🚀</span>
+          <span>Go to Dashboard</span>
+        </button>
+
+        <button class="btn-secondary" id="viewBtn">
+          <span>📂</span>
+          <span>View Local History</span>
+        </button>
+        
+        <button class="btn-danger" id="manualStopBtn">
+          <span>⏹</span>
+          <span>Stop & Save</span>
+        </button>
       </div>
-      <ul class="info-list">
-        <li>Auto-enables captions</li>
-        <li>Captures everything said</li>
-        <li>AI processes when meeting ends</li>
-        <li>Email sent automatically</li>
-      </ul>
-      <div class="info-note">
-        Just join a meeting and it works!
+      
+      <div class="info-card">
+        <div class="info-title">
+          <span>Automatic Mode</span>
+        </div>
+        <ul class="info-list">
+          <li>Auto-enables captions</li>
+          <li>Captures everything said</li>
+          <li>AI processes when meeting ends</li>
+          <li>Saves to drive & sends email</li>
+        </ul>
       </div>
     </div>
+    
   </div>
   
   <script src="popup.js"></script>

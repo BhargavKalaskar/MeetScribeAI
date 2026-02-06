@@ -1,8 +1,14 @@
-Meet Transcriber 🎙️
+# Meet Transcriber 🎙️
 
 **Automatically capture, transcribe, and summarize Google Meet conversations with AI-powered insights.**
 
 A Chrome extension that transforms Google Meet captions into structured meeting summaries, automatically saves them to Google Drive, and emails you the key takeaways.
+
+![Version](https://img.shields.io/badge/version-2.4-blue)
+![Status](https://img.shields.io/badge/status-working-success)
+![AI](https://img.shields.io/badge/AI-Groq%20LLaMA%203.3-purple)
+
+---
 
 ## 🌟 What This Extension Does
 
@@ -47,18 +53,18 @@ A Chrome extension that transforms Google Meet captions into structured meeting 
 ## 🚀 How It Works
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  1. Join Google Meet → Auto Enable Captions                 │
-│                                                             │
+│  1. Join Google Meet → Enable Captions                      │
+│                                                              │
 │  2. Extension automatically captures everything             │
-│     ├─ Raw caption stream (every 500ms)                     │
-│     ├─ Smart deduplication                                  │
+│     ├─ Raw caption stream (every 500ms)                    │
+│     ├─ Smart deduplication                                 │
 │     └─ Clean transcript saved locally                       │
-│                                                             │
-│  3. Click "🤖 Process with AI" button                      │
-│     ├─ Groq AI analyzes transcript                          │
-│     ├─ Google Drive uploads file                            │
+│                                                              │
+│  3. Click "🤖 Process with AI" button                       │
+│     ├─ Groq AI analyzes transcript                         │
+│     ├─ Google Drive uploads file                           │
 │     └─ Gmail sends summary                                  │
-│                                                             │
+│                                                              │
 │  4. Get email with insights + Drive link                    │
 └─────────────────────────────────────────────────────────────┘
 ```

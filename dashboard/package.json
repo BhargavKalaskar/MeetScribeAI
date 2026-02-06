@@ -12,6 +12,7 @@
   "dependencies": {
     "date-fns": "^4.1.0",
     "firebase": "^12.8.0",
+    "js-cookie": "^3.0.5",
     "jspdf": "^4.1.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
