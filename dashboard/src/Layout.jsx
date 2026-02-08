@@ -6,7 +6,8 @@ import {
   LayoutGrid, 
   Settings, 
   LogOut, 
-  User 
+  User,
+  Globe // Added Globe icon for the Home Page button
 } from 'lucide-react';
 
 export default function Layout() {
@@ -16,7 +17,7 @@ export default function Layout() {
 
   const handleLogout = () => {
     auth.signOut();
-    navigate('/login');
+    navigate('/'); // Send to Landing Page on logout
   };
 
   const getGreeting = () => {
@@ -62,8 +63,15 @@ export default function Layout() {
           <div className="px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
             Menu
           </div>
-          <NavItem icon={LayoutGrid} label="My Meetings" path="/" />
+          {/* FIX: Points to /dashboard now */}
+          <NavItem icon={LayoutGrid} label="My Meetings" path="/dashboard" />
           <NavItem icon={Settings} label="Account & Settings" path="/settings" />
+          
+          <div className="mt-4 px-3 py-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+            External
+          </div>
+          {/* NEW BUTTON: Points to Landing Page */}
+          <NavItem icon={Globe} label="Home Page" path="/" />
         </div>
 
         {/* User Profile */}
@@ -82,7 +90,6 @@ export default function Layout() {
             </div>
           </div>
 
-          {/* Logout Button (Full Width now) */}
           <button 
             onClick={handleLogout} 
             className="w-full flex items-center justify-center gap-2 p-2 rounded-md border border-gray-200 text-xs font-medium hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-colors text-gray-700"

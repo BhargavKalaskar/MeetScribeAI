@@ -10,7 +10,7 @@ export default function Login() {
   const handleLogin = async () => {
     try {
       await signInWithPopup(auth, googleProvider);
-      navigate('/'); // Redirect to Dashboard after login
+      navigate('/dashboard'); // Redirect to Dashboard after login
     } catch (error) {
       console.error("Login failed:", error);
       alert("Login failed. Please try again.");

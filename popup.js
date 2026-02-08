@@ -1,7 +1,7 @@
 // MeetScribeAI - Popup Script (Synced Auth)
 
 // === CONFIG ===
-const DASHBOARD_URL = "http://localhost:5173"; 
+const DASHBOARD_URL = "http://localhost:5173/dashboard"; 
 const SETTINGS_URL = "http://localhost:5173/settings";
 const LOGIN_URL = "http://localhost:5173/login"; 
 const COOKIE_NAME = "meetscribe_token"; // Must match your React App's cookie name

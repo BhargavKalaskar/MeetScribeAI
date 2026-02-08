@@ -1,27 +1,39 @@
-// Meet Transcriber - Background Script (OAuth Handler + Storage)
+// Meet Transcriber - Background Script (Unified Auth)
 console.log('Meet Transcriber: Background script loaded');
 
-// On Install: Open the Welcome Page
+// 1. Install Event
 chrome.runtime.onInstalled.addListener((details) => {
   if (details.reason === 'install') {
     chrome.tabs.create({ url: 'welcome.html' });
   }
 });
 
-// Handle transcript saving and OAuth
+// ==================== INTERNAL MESSAGES (Extension <-> Content Script) ====================
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  
+  // A. Check Auth Status (Used by UI to show/hide login button)
+  if (request.action === 'checkAuthStatus') {
+    chrome.storage.local.get(['oauthToken', 'tokenExpiry', 'userEmail'], (result) => {
+      const isValid = result.oauthToken && 
+                      result.tokenExpiry && 
+                      Date.now() < result.tokenExpiry;
+      
+      sendResponse({ 
+        isAuthenticated: !!isValid, 
+        hasEmail: !!result.userEmail 
+      });
+    });
+    return true; 
+  }
+
+  // B. Save Transcript
   if (request.action === 'saveTranscript') {
     console.log('Meet Transcriber: 💾 Saving transcript');
-    console.log('Meet Transcriber: Stop reason:', request.stopReason);
-    console.log('Meet Transcriber: Segments:', request.transcript?.length);
-    
     const transcriptText = request.fullTranscript || 
                           request.transcript.map(item => item.text).join(' ');
     
     chrome.storage.local.get(['savedTranscripts'], (result) => {
       const saved = result.savedTranscripts || [];
-      
-      // Create new transcript entry
       saved.push({
         title: request.meetingTitle,
         transcript: transcriptText,
@@ -29,50 +41,26 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         fullData: request.transcript,
         stopReason: request.stopReason
       });
-      
-      chrome.storage.local.set({ savedTranscripts: saved }, () => {
-        console.log('Meet Transcriber: ✅ Saved! Total transcripts:', saved.length);
-        sendResponse({ status: 'saved' });
-      });
+      chrome.storage.local.set({ savedTranscripts: saved });
+      sendResponse({ status: 'saved' });
     });
-    
     return true;
   }
   
-  // Handle OAuth token request with persistent caching and account hint
+  // C. Get OAuth Token (Internal Flow)
   if (request.action === 'getOAuthToken') {
     console.log('🔑 Getting OAuth token...');
     
-    // Check for cached token in storage
     chrome.storage.local.get(['oauthToken', 'tokenExpiry', 'userEmail'], (result) => {
-      const cachedToken = result.oauthToken;
-      const tokenExpiry = result.tokenExpiry;
-      const userEmail = result.userEmail;
-      
-      // Check if we have a valid cached token
-      if (cachedToken && tokenExpiry && Date.now() < tokenExpiry) {
-        const minutesLeft = Math.round((tokenExpiry - Date.now()) / 60000);
-        console.log('✅ Using cached token from storage (valid for', minutesLeft, 'more minutes)');
-        sendResponse({ 
-          success: true, 
-          token: cachedToken 
-        });
+      // 1. Try Cached Token (This is where the Dashboard Sync helps!)
+      if (result.oauthToken && result.tokenExpiry && Date.now() < result.tokenExpiry) {
+        console.log('✅ Using cached token');
+        sendResponse({ success: true, token: result.oauthToken });
         return;
       }
       
-      console.log('🔄 No valid cached token, fetching new one...');
-      
-      // Check if we need to ask for email first
-      if (!userEmail) {
-        console.log('📧 No user email stored, requesting email first...');
-        sendResponse({
-          success: false,
-          needEmail: true,
-          error: 'Please provide your Google account email'
-        });
-        return;
-      }
-      
+      // 2. If no cache, launch Interactive Login
+      console.log('🔄 Fetching new token...');
       const clientId = '957821720636-a0jdmo0djkgb05ukfn9jiuir3rhkd656.apps.googleusercontent.com';
       const redirectUri = chrome.identity.getRedirectURL();
       const scopes = [
@@ -82,90 +70,90 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         'https://www.googleapis.com/auth/userinfo.profile'
       ];
       
-      // Build auth URL with login_hint to pre-select account
-      const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+      let authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
         `client_id=${clientId}&` +
         `response_type=token&` +
         `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-        `scope=${encodeURIComponent(scopes.join(' '))}&` +
-        `login_hint=${encodeURIComponent(userEmail)}`;
-      
-      console.log('🔍 Redirect URI:', redirectUri);
-      console.log('📧 Using login hint:', userEmail);
+        `scope=${encodeURIComponent(scopes.join(' '))}`;
+
+      if (result.userEmail) {
+        authUrl += `&login_hint=${encodeURIComponent(result.userEmail)}`;
+      }
       
       chrome.identity.launchWebAuthFlow(
-        {
-          url: authUrl,
-          interactive: true
-        },
+        { url: authUrl, interactive: true },
         (responseUrl) => {
-          if (chrome.runtime.lastError) {
+          if (chrome.runtime.lastError || !responseUrl) {
             console.error('❌ OAuth error:', chrome.runtime.lastError);
-            sendResponse({ 
-              success: false, 
-              error: chrome.runtime.lastError.message 
-            });
+            sendResponse({ success: false, error: chrome.runtime.lastError?.message || 'Auth failed' });
             return;
           }
           
-          if (!responseUrl) {
-            sendResponse({ 
-              success: false, 
-              error: 'No response URL received' 
-            });
-            return;
-          }
+          const url = new URL(responseUrl);
+          const params = new URLSearchParams(url.hash.substring(1));
+          const accessToken = params.get('access_token');
+          const expiresIn = parseInt(params.get('expires_in')) || 3600;
           
-          console.log('✅ Got response URL');
-          
-          try {
-            const url = new URL(responseUrl);
-            const params = new URLSearchParams(url.hash.substring(1));
-            const accessToken = params.get('access_token');
-            const expiresIn = parseInt(params.get('expires_in')) || 3600;
+          if (accessToken) {
+            const expiryTime = Date.now() + (expiresIn * 1000);
+            chrome.storage.local.set({ oauthToken: accessToken, tokenExpiry: expiryTime });
             
-            if (accessToken) {
-              const expiryTime = Date.now() + (expiresIn * 1000);
-              
-              // Store token in Chrome storage (persists)
-              chrome.storage.local.set({
-                oauthToken: accessToken,
-                tokenExpiry: expiryTime
-              }, () => {
-                console.log('✅ Token cached in storage, expires in', expiresIn, 'seconds');
-                console.log('✅ Got access token:', accessToken.substring(0, 20) + '...');
-                
-                sendResponse({ 
-                  success: true, 
-                  token: accessToken 
-                });
-              });
-            } else {
-              sendResponse({ 
-                success: false, 
-                error: 'No access token in response' 
-              });
-            }
-          } catch (error) {
-            console.error('❌ Error parsing token:', error);
-            sendResponse({ 
-              success: false, 
-              error: error.message 
+            // Auto-fetch profile to fix the "Email Missing" bug
+            fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+              headers: { Authorization: `Bearer ${accessToken}` }
+            })
+            .then(res => res.json())
+            .then(profile => {
+              if (profile.email) chrome.storage.local.set({ userEmail: profile.email });
             });
+
+            sendResponse({ success: true, token: accessToken });
           }
         }
       );
     });
+    return true; 
+  }
+});
+
+// ==================== EXTERNAL MESSAGES (Dashboard <-> Extension) ====================
+// This is the "Bridge" that allows the Dashboard to login the Extension automatically
+chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
+  
+  // 1. Dashboard -> Extension: "Here is the login session!"
+  if (request.action === 'syncSession') {
+    console.log('🔄 Syncing session from Dashboard...');
     
+    if (request.token && request.userEmail) {
+      // Assume 1 hour expiry for safety
+      const expiryTime = Date.now() + 3600 * 1000;
+      
+      chrome.storage.local.set({
+        oauthToken: request.token,
+        tokenExpiry: expiryTime,
+        userEmail: request.userEmail
+      }, () => {
+        console.log('✅ Session synced!');
+        sendResponse({ success: true });
+      });
+    } else {
+      sendResponse({ success: false, error: 'Missing token' });
+    }
     return true;
   }
-  
-  // Handle saving user email
-  if (request.action === 'saveUserEmail') {
-    console.log('📧 Saving user email:', request.email);
-    chrome.storage.local.set({ userEmail: request.email }, () => {
-      console.log('✅ User email saved');
-      sendResponse({ success: true });
+
+  // 2. Extension -> Dashboard: "Am I logged in?"
+  if (request.action === 'checkExtensionAuth') {
+    chrome.storage.local.get(['oauthToken', 'tokenExpiry', 'userEmail'], (result) => {
+      const isValid = result.oauthToken && 
+                      result.tokenExpiry && 
+                      Date.now() < result.tokenExpiry;
+      
+      sendResponse({ 
+        isAuthenticated: !!isValid, 
+        userEmail: result.userEmail,
+        token: isValid ? result.oauthToken : null
+      });
     });
     return true;
   }
