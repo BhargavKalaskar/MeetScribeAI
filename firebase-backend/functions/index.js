@@ -1,6 +1,10 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
-const cors = require('cors')({ origin: true });
+//const cors = require('cors')({ origin: true });
+const cors = require('cors')({ 
+  origin: ["https://meet-scribe-ai-one.vercel.app/", /chrome-extension:\/\/.*/] 
+});
+
 const fetch = require('node-fetch');
 
 admin.initializeApp();

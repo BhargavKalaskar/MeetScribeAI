@@ -1,10 +1,21 @@
 // MeetScribeAI - Popup Script (Synced Auth)
 
 // === CONFIG ===
-const DASHBOARD_URL = "http://localhost:5173/dashboard"; 
-const SETTINGS_URL = "http://localhost:5173/settings";
-const LOGIN_URL = "http://localhost:5173/login"; 
-const COOKIE_NAME = "meetscribe_token"; // Must match your React App's cookie name
+// const DASHBOARD_URL = "http://localhost:5173/dashboard"; 
+// const SETTINGS_URL = "http://localhost:5173/settings";
+// const LOGIN_URL = "http://localhost:5173/login"; 
+// const COOKIE_NAME = "meetscribe_token"; // Must match your React App's cookie name
+
+// === CONFIG ===
+// Uses the URL from config.js (e.g., https://meet-scribe-ai-one.vercel.app/dashboard)
+const DASHBOARD_URL = CONFIG.DASHBOARD_URL; 
+
+// Dynamic Sub-paths based on the Dashboard URL
+const BASE_URL = CONFIG.DASHBOARD_URL.replace('/dashboard', ''); // Removes /dashboard to get root
+const SETTINGS_URL = BASE_URL + "/settings";
+const LOGIN_URL = BASE_URL + "/login";
+
+const COOKIE_NAME = "meetscribe_token";
 
 // === INITIALIZATION ===
 document.addEventListener('DOMContentLoaded', () => {
@@ -127,7 +138,15 @@ async function updateStatus() {
   }
 }
 
-// Polling for status and auth check
-setInterval(() => {
-    checkAuth();
+// // Polling for status and auth check
+// setInterval(() => {
+//     checkAuth();
+// }, 2000);
+
+// Polling for STATUS (not auth)
+    setInterval(() => {
+    // Only update status if we are logged in (mainView is visible)
+       if (!document.getElementById('mainView').classList.contains('hidden')) {
+           updateStatus();
+    }
 }, 2000);
