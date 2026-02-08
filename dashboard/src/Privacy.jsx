@@ -25,7 +25,7 @@ const Privacy = () => {
       <p>All data is encrypted in transit and stored securely using Google Firebase.</p>
 
       <h2>4. Contact</h2>
-      <p>For any privacy concerns, please contact the developer at: <strong>[YOUR EMAIL HERE]</strong></p>
+      <p>For any privacy concerns, please contact the developer at: <strong>bhargavak246@gmail.com</strong></p>
     </div>
   );
 };
