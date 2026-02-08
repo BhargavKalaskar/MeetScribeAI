@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Meet Transcriber",
+  "name": "MeetScribeAI", 
   "version": "2.7",
   "description": "Automatically transcribe Google Meet captions with AI summaries",
-  "key": "MIGeMA0GCSqGSIb3DQEBAQUAA4GMADCBiAKBgEbuXzH+yMlM+a3Su24y+6if0eQ6DkLJHdvsdlqDA/qffk6s857ALrwJZOAnwI5km5jwfBmBsYi4tQGXOpy0aFwampeE7dKgj4VvAsH8z+zszSkYbgPgRdqRLBl7MEthF/xktsPau0HVlqSsqxZMlPsqqo7eC34AOHgP4RS9CtkBAgMBAAE=",
+ 
   
   "permissions": [
     "storage",
@@ -14,7 +14,7 @@
   "host_permissions": [
     "https://meet.google.com/*",
     "https://asia-south1-meet-transcriber-f8a91.cloudfunctions.net/*",
-    "http://localhost:5173/*"
+    "https://meet-scribe-ai-one.vercel.app/*"
   ],
   
   "oauth2": {
@@ -41,7 +41,18 @@
   },
   
   "action": {
-    "default_popup": "popup.html"
+    "default_popup": "popup.html",
+    "default_icon": {
+        "16": "icons/icon16.png",
+        "48": "icons/icon48.png",
+        "128": "icons/icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
   },
   
   "web_accessible_resources": [{

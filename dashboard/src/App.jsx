@@ -8,6 +8,7 @@ import Layout from './Layout';
 import Settings from './Settings'; 
 import AuthSync from './components/AuthSync'; 
 import LandingPage from './pages/LandingPage'; 
+import Privacy from './Privacy';
 
 function PrivateRoute({ children }) {
   const [user, loading] = useAuthState(auth);
@@ -31,6 +32,7 @@ export default function App() {
           {/* CRITICAL FIX: Dashboard MUST be at "/dashboard", not "/" */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/privacy" element={<Privacy />} />
         </Route>
 
         {/* Fallback: If they go to a weird URL, send them home */}
