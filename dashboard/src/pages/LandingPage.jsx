@@ -11,6 +11,13 @@ const LandingPage = () => {
   const navigate = useNavigate();
   const [user] = useAuthState(auth); // <--- 3. Get User Status
 
+  // Your Chrome Web Store Link
+  const CHROME_STORE_URL = "https://chromewebstore.google.com/detail/meetscribeai/cmoiokmpeidegmacfkiglijmbeeobioi";
+
+  const handleAddToChrome = () => {
+    window.open(CHROME_STORE_URL, '_blank');
+  };
+
   return (
     <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-green-100">
       
@@ -51,7 +58,11 @@ const LandingPage = () => {
                 </button>
             )}
 
-            <button className="bg-black text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-800 transition flex items-center gap-2 shadow-lg shadow-slate-200">
+            {/* UPDATED: Navbar Add to Chrome Button */}
+            <button 
+              onClick={handleAddToChrome}
+              className="bg-black text-white px-5 py-2.5 rounded-full text-sm font-semibold hover:bg-slate-800 transition flex items-center gap-2 shadow-lg shadow-slate-200"
+            >
               <Chrome size={18} />
               Add to Chrome
             </button>
@@ -85,9 +96,13 @@ const LandingPage = () => {
           
           {/* Main CTA */}
           <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mb-20">
-            <button className="bg-green-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-green-700 transition transform hover:-translate-y-1 shadow-xl shadow-green-200 flex items-center gap-3">
+            {/* UPDATED: Hero Add to Chrome Button */}
+            <button 
+              onClick={handleAddToChrome}
+              className="bg-green-600 text-white px-8 py-4 rounded-full text-lg font-bold hover:bg-green-700 transition transform hover:-translate-y-1 shadow-xl shadow-green-200 flex items-center gap-3"
+            >
               <Chrome size={24} />
-              Add to Chrome — It's Free
+              Add to Chrome - It's Free
             </button>
             
             {/* 5. HERO BUTTON: Secondary option to Login or go to Dashboard */}
