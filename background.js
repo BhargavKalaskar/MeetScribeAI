@@ -121,6 +121,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 // This is the "Bridge" that allows the Dashboard to login the Extension automatically
 chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
   
+  if (sender.origin !== 'https://meet-scribe-ai-one.vercel.app') {
+    console.warn('Blocked unauthorized connection attempt from:', sender.origin);
+    return; // Silently fail the request
+  }
+
   // 1. Dashboard -> Extension: "Here is the login session!"
   if (request.action === 'syncSession') {
     console.log('🔄 Syncing session from Dashboard...');

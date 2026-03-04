@@ -4,7 +4,6 @@
   "version": "2.7",
   "description": "Automatically transcribe Google Meet captions with AI summaries",
  
-  
   "permissions": [
     "storage",
     "identity",
@@ -16,6 +15,10 @@
     "https://asia-south1-meet-transcriber-f8a91.cloudfunctions.net/*",
     "https://meet-scribe-ai-one.vercel.app/*"
   ],
+
+  "externally_connectable": {
+    "matches": ["https://meet-scribe-ai-one.vercel.app/*"]
+  },
   
   "oauth2": {
     "client_id": "957821720636-a0jdmo0djkgb05ukfn9jiuir3rhkd656.apps.googleusercontent.com",
