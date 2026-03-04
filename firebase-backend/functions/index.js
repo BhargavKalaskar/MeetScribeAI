@@ -1,6 +1,5 @@
 const { onRequest } = require('firebase-functions/v2/https');
 const admin = require('firebase-admin');
-//const cors = require('cors')({ origin: true });
 const cors = require('cors')({ 
   origin: ["https://meet-scribe-ai-one.vercel.app/", /chrome-extension:\/\/.*/] 
 });
@@ -258,10 +257,41 @@ exports.processMeeting = onRequest(
         
         const user = await verifyGoogleTokenAndGetUser(googleToken);
 
+        // ====================================================================
+        // 🚨 ADDED: RATE LIMITING CHECKS (Denial of Wallet Protection)
+        // ====================================================================
+        const DAILY_LIMIT = 5; // Configurable based on user tiers later
+        
+        // Get start of current day in UTC
+        const startOfDay = new Date();
+        startOfDay.setUTCHours(0, 0, 0, 0);
+
+        try {
+          const usageSnapshot = await admin.firestore()
+            .collection('users')
+            .doc(user.uid)
+            .collection('meetings')
+            .where('createdAt', '>=', admin.firestore.Timestamp.fromDate(startOfDay))
+            .count()
+            .get();
+
+          if (usageSnapshot.data().count >= DAILY_LIMIT) {
+            console.warn(`Rate limit exceeded for user: ${user.uid}`);
+            return res.status(429).json({ 
+                error: 'Too Many Requests', 
+                message: `You have reached your daily limit of ${DAILY_LIMIT} meetings. Please try again tomorrow.` 
+            });
+          }
+        } catch (dbError) {
+          console.error('Failed to verify rate limits:', dbError);
+          return res.status(500).json({ error: 'Internal system error verifying usage limits.' });
+        }
+        // ====================================================================
+
         const { title, transcript, meetingDate } = req.body;
         if (!transcript || transcript.length < 50) return res.status(400).json({ error: 'Transcript too short' });
 
-        // 1. Generate AI Summary (Now Detailed)
+        // 1. Generate AI Summary (Now Detailed & Protected)
         const structuredData = await generateAI_Summary(transcript);
 
         // 2. Save to Firestore
