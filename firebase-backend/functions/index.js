@@ -6,6 +6,11 @@ const cors = require('cors')({
 
 const fetch = require('node-fetch');
 const nodemailer = require('nodemailer'); // Make sure you ran: npm install nodemailer
+const { OAuth2Client } = require('google-auth-library');
+
+// Your exact Chrome Extension Client ID from manifest.json
+const GOOGLE_CLIENT_ID = '957821720636-a0jdmo0djkgb05ukfn9jiuir3rhkd656.apps.googleusercontent.com';
+const authClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 admin.initializeApp();
 
@@ -175,13 +180,25 @@ async function sendEmail(userEmail, title, htmlContent) {
 }
 
 // ==================== 3. IDENTITY BRIDGE ====================
+// ==================== 3. IDENTITY BRIDGE ====================
 
 async function verifyGoogleTokenAndGetUser(googleAccessToken) {
   try {
+    // 🚨 FIX: Verify the token's audience to prevent Proxy Attacks
+    const tokenInfo = await authClient.getTokenInfo(googleAccessToken);
+    
+    if (tokenInfo.aud !== GOOGLE_CLIENT_ID) {
+        console.warn(`Blocked token with invalid audience: ${tokenInfo.aud}`);
+        throw new Error('Unauthorized token audience. Potential proxy attack blocked.');
+    }
+
+    // Token is verified and belongs specifically to MeetScribe. Now get the user info.
     const response = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo`, {
         headers: { 'Authorization': `Bearer ${googleAccessToken}` }
     });
+    
     if (!response.ok) throw new Error('Invalid Google Token');
+    
     const googleUser = await response.json();
     const email = googleUser.email;
 
