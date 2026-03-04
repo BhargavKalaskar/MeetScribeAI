@@ -5,12 +5,22 @@ const cors = require('cors')({
 });
 
 const fetch = require('node-fetch');
+const nodemailer = require('nodemailer'); // Make sure you ran: npm install nodemailer
 
 admin.initializeApp();
 
 // ==================== CONFIGURATION ====================
 const GROQ_API_KEY = process.env.GROQ_API_KEY; 
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
+
+// Configure the Email Transporter (Nodemailer)
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'meetscribeai.in@gmail.com',
+    pass: process.env.GMAIL_APP_PASSWORD 
+  }
+});
 
 // ==================== 1. UTILITIES (Formatters) ====================
 
@@ -146,28 +156,22 @@ async function uploadToDrive(fileName, content, accessToken) {
   return `https://drive.google.com/file/d/${uploadData.id}/view`;
 }
 
-async function sendEmail(userEmail, title, htmlContent, accessToken) {
-  const subject = `Summary: ${title}`;
-  const body = [
-    `To: ${userEmail}`,
-    `Subject: ${subject}`,
-    'MIME-Version: 1.0',
-    'Content-Type: text/html; charset=utf-8',
-    '',
-    htmlContent
-  ].join('\r\n');
+// Nodemailer send email function (Replaces Google API)
+async function sendEmail(userEmail, title, htmlContent) {
+  const mailOptions = {
+    from: '"MeetScribe AI" <meetscribeai.in@gmail.com>', 
+    to: userEmail,
+    subject: `Meeting Summary: ${title}`,
+    html: htmlContent
+  };
 
-  const encodedEmail = Buffer.from(body).toString('base64')
-    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-
-  await fetch('https://www.googleapis.com/gmail/v1/users/me/messages/send', {
-    method: 'POST',
-    headers: { 
-      'Authorization': `Bearer ${accessToken}`,
-      'Content-Type': 'application/json' 
-    },
-    body: JSON.stringify({ raw: encodedEmail })
-  });
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`Email successfully sent to ${userEmail}`);
+  } catch (error) {
+    console.error('Nodemailer Error:', error);
+    throw new Error('Failed to send email via SMTP');
+  }
 }
 
 // ==================== 3. IDENTITY BRIDGE ====================
@@ -205,7 +209,6 @@ async function verifyGoogleTokenAndGetUser(googleAccessToken) {
 
 async function generateAI_Summary(transcript) {
   try {
-    // === 🚀 UPGRADED PROMPT FOR DETAILED SUMMARIES ===
     const systemPrompt = `
       You are a senior meeting analyst. Your goal is to create a COMPREHENSIVE and DETAILED meeting record.
       
@@ -231,7 +234,7 @@ async function generateAI_Summary(transcript) {
           { role: 'system', content: systemPrompt },
           { role: 'user', content: transcript }
         ],
-        temperature: 0.3, // Increased slightly for more expressive summaries
+        temperature: 0.3,
         response_format: { type: "json_object" }
       })
     });
@@ -247,7 +250,7 @@ async function generateAI_Summary(transcript) {
 // ==================== 5. MAIN HANDLER ====================
 
 exports.processMeeting = onRequest(
-  { region: 'asia-south1', cors: true, secrets: ["GROQ_API_KEY"], timeoutSeconds: 300 },
+  { region: 'asia-south1', cors: true, secrets: ["GROQ_API_KEY", "GMAIL_APP_PASSWORD"], timeoutSeconds: 300 },
   (req, res) => {
     cors(req, res, async () => {
       try {
@@ -257,12 +260,8 @@ exports.processMeeting = onRequest(
         
         const user = await verifyGoogleTokenAndGetUser(googleToken);
 
-        // ====================================================================
-        // 🚨 ADDED: RATE LIMITING CHECKS (Denial of Wallet Protection)
-        // ====================================================================
-        const DAILY_LIMIT = 5; // Configurable based on user tiers later
-        
-        // Get start of current day in UTC
+        // --- Rate Limiting Checks ---
+        const DAILY_LIMIT = 5; 
         const startOfDay = new Date();
         startOfDay.setUTCHours(0, 0, 0, 0);
 
@@ -286,15 +285,13 @@ exports.processMeeting = onRequest(
           console.error('Failed to verify rate limits:', dbError);
           return res.status(500).json({ error: 'Internal system error verifying usage limits.' });
         }
-        // ====================================================================
+        // -----------------------------
 
         const { title, transcript, meetingDate } = req.body;
         if (!transcript || transcript.length < 50) return res.status(400).json({ error: 'Transcript too short' });
 
-        // 1. Generate AI Summary (Now Detailed & Protected)
         const structuredData = await generateAI_Summary(transcript);
 
-        // 2. Save to Firestore
         const docRef = await admin.firestore().collection('users').doc(user.uid).collection('meetings').add({
             title: title || 'Untitled',
             transcript: transcript,
@@ -304,7 +301,6 @@ exports.processMeeting = onRequest(
             status: 'processed'
         });
 
-        // 3. Upload to Drive (Server Side)
         const timestamp = new Date().toISOString().split('T')[0];
         const safeTitle = (title || 'Meeting').replace(/[^a-z0-9]/gi, '_');
         const fileName = `${timestamp}_${safeTitle}_Summary.txt`;
@@ -318,15 +314,14 @@ exports.processMeeting = onRequest(
             console.error('Drive Upload Failed:', driveErr);
         }
 
-        // 4. Send Email (Server Side)
+        // Send Email via Nodemailer
         try {
             const emailHtml = formatForEmail(title, structuredData, driveLink || '#');
-            await sendEmail(user.email, title, emailHtml, googleToken);
+            await sendEmail(user.email, title, emailHtml);
         } catch (emailErr) {
             console.error('Email Failed:', emailErr);
         }
 
-        // 5. Return Success
         return res.status(200).json({ 
             success: true, 
             id: docRef.id, 

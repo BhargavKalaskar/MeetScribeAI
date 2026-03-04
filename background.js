@@ -63,9 +63,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       console.log('🔄 Fetching new token...');
       const clientId = '957821720636-a0jdmo0djkgb05ukfn9jiuir3rhkd656.apps.googleusercontent.com';
       const redirectUri = chrome.identity.getRedirectURL();
+      
+      // 🚨 FIX: Removed 'https://www.googleapis.com/auth/gmail.send' to bypass CASA audit 🚨
       const scopes = [
         'https://www.googleapis.com/auth/drive.file',
-        'https://www.googleapis.com/auth/gmail.send',
         'https://www.googleapis.com/auth/userinfo.email',
         'https://www.googleapis.com/auth/userinfo.profile'
       ];
